@@ -102,7 +102,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1701419211
+  GlobalObjectIdHash: 1883587531
   InScenePlacedSourceGlobalObjectIdHash: 1883587531
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -130,7 +130,7 @@ MonoBehaviour:
   SyncRotAngleX: 0
   SyncRotAngleY: 0
   SyncRotAngleZ: 0
-  SyncScaleX: 0
+  SyncScaleX: 1
   SyncScaleY: 0
   SyncScaleZ: 0
   PositionThreshold: 0.001
