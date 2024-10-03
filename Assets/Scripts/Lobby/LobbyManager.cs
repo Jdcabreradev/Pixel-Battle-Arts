@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Lobbies;
@@ -8,7 +9,7 @@ using Unity.Services.Lobbies.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class LobbyManager : MonoBehaviour {
+public class LobbyManager : NetworkBehaviour {
 
 
     public static LobbyManager Instance { get; private set; }
@@ -69,19 +70,26 @@ public class LobbyManager : MonoBehaviour {
         CheckLobbyFull();
     }
 
-    // New method to check if the lobby is full
     private void CheckLobbyFull()
     {
         if (joinedLobby != null && joinedLobby.Players.Count >= joinedLobby.MaxPlayers)
         {
             Debug.Log("Lobby is full! Transitioning to game scene...");
-            ChangeScene("NetScene"); // Replace "GameScene" with your actual scene name
+            ChangeSceneServerRpc("NetScene"); // Call the Server RPC
         }
     }
 
-    private void ChangeScene(string sceneName)
+    // New Server RPC to change scene for all players
+    [ServerRpc(RequireOwnership = false)]
+    private void ChangeSceneServerRpc(string sceneName)
     {
-        // Call this to transition to the specified scene
+        ChangeSceneClientRpc(sceneName);
+    }
+
+    // Client RPC to change scene on all clients
+    [ClientRpc]
+    private void ChangeSceneClientRpc(string sceneName)
+    {
         SceneManager.LoadScene(sceneName);
     }
 
