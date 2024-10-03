@@ -153,7 +153,7 @@ public class PlayerController : NetworkBehaviour
         DisableControls();  // Disable controls when hit
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     private void UnlockPlayerControlsServerRpc()
     {
         UnlockPlayerControlsClientRpc();  // Unlock controls after the hit recovery time
