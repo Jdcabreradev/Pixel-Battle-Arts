@@ -108,7 +108,6 @@ public class PlayerController : NetworkBehaviour
 
     public bool IsGrounded()
     {
-        // Implement ground check logic here
         return isGrounded;
     }
 
@@ -134,43 +133,14 @@ public class PlayerController : NetworkBehaviour
         }
         else
         {
-            FSM.RequestStateChange("Hit");
-            // Lock only the player who was hit by invoking a targeted ClientRpc
-            LockPlayerControlsClientRpc(NetworkManager.Singleton.LocalClientId);
-            Invoke(nameof(UnlockPlayerControlsServerRpc), 1f); // Lock for 1 second
-        }
-    }
-
-    [ClientRpc]
-    private void LockPlayerControlsClientRpc(ulong clientId)
-    {
-        if (NetworkManager.Singleton.LocalClientId == clientId)
-        {
-            DisableControls();
-        }
-    }
-
-    [ServerRpc(RequireOwnership = false)] // Allow non-owners to call this
-    private void UnlockPlayerControlsServerRpc()
-    {
-        UnlockPlayerControlsClientRpc(NetworkManager.Singleton.LocalClientId); // Use current client to unlock
-    }
-
-    [ClientRpc]
-    private void UnlockPlayerControlsClientRpc(ulong clientId)
-    {
-        if (NetworkManager.Singleton.LocalClientId == clientId)
-        {
-            // Re-enable controls after hit cooldown
-            this.enabled = true;
-            playerCollider.isTrigger = false;
-            rb.bodyType = RigidbodyType2D.Dynamic;
+            FSM.RequestStateChange("Hit");  // Only change state for hit, no locking
         }
     }
 
     [ClientRpc]
     private void NotifyDeathClientRpc()
     {
+        this.DisableControls();
         FSM.RequestStateChange("Death");
     }
 
@@ -210,7 +180,7 @@ public class PlayerController : NetworkBehaviour
 
     public void DisableControls()
     {
-        this.enabled = false;  // Disables this script, preventing player actions
+        this.enabled = false;
         playerCollider.isTrigger = true;
         rb.bodyType = RigidbodyType2D.Static;
     }
