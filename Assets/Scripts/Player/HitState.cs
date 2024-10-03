@@ -16,7 +16,11 @@ public class HitState : State
 
     public override void OnLogic()
     {
-        // Controls are locked, so no movement or input is processed
+        // Check if the animation is no longer playing
+        if (playerController.Animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f)
+        {
+            playerController.FSM.RequestStateChange("Idle");
+        }
     }
 
     public override void OnExit()

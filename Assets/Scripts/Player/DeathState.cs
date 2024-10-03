@@ -11,7 +11,6 @@ public class DeathState : State
 
     public override void OnEnter()
     {
-        playerController.DisableControls();  // Disable everything on death
         playerController.Animator.Play("Death");
     }
 

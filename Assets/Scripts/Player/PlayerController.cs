@@ -17,6 +17,7 @@ public class PlayerController : NetworkBehaviour
     public int Health = 100; // Player health
     public float attackCooldown = 1f; // Cooldown for attacks
     private float lastAttackTime = -1f; // Tracks the last time an attack was performed
+    private bool isAlive = true;
 
     private void Awake()
     {
@@ -63,7 +64,7 @@ public class PlayerController : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner) return;
+        if (!IsOwner || !isAlive) return;
         FSM.OnLogic();
 
         if (Input.GetMouseButtonDown(0)) // 0 is the left mouse button
@@ -141,6 +142,7 @@ public class PlayerController : NetworkBehaviour
     [ClientRpc]
     private void NotifyDeathClientRpc()
     {
+        this.DisableControls();
         FSM.RequestStateChange("Death");
     }
 
@@ -187,7 +189,7 @@ public class PlayerController : NetworkBehaviour
 
     public void UnlockControls()
     {
-        this.enabled = true;
+        this.isAlive = false;
         playerCollider.isTrigger = false;
         rb.bodyType = RigidbodyType2D.Dynamic;
     }
