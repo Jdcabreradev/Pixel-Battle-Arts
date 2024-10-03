@@ -7,7 +7,6 @@ public class PlayerController : NetworkBehaviour
     public StateMachine FSM { get; private set; }
     public Animator Animator { get; private set; }
     private Rigidbody2D rb;
-
     public float RunSpeed = 5f;
     private int jumpCount = 0;
     private bool isGrounded = false;
@@ -67,7 +66,6 @@ public class PlayerController : NetworkBehaviour
         if (!IsOwner) return;
         FSM.OnLogic();
 
-        // Check for left mouse button click to trigger attack
         if (Input.GetMouseButtonDown(0)) // 0 is the left mouse button
         {
             Attack();
@@ -110,6 +108,7 @@ public class PlayerController : NetworkBehaviour
 
     public bool IsGrounded()
     {
+        // Implement ground check logic here
         return isGrounded;
     }
 
@@ -124,7 +123,7 @@ public class PlayerController : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void TakeDamageServerRpc(int damage)
+    public void TakeDamageServerRpc(int damage, ulong attackerClientId)
     {
         Health -= damage;
 
@@ -136,8 +135,36 @@ public class PlayerController : NetworkBehaviour
         else
         {
             FSM.RequestStateChange("Hit");
-            LockPlayerControlsClientRpc();
+            // Lock only the player who was hit by invoking a targeted ClientRpc
+            LockPlayerControlsClientRpc(NetworkManager.Singleton.LocalClientId);
             Invoke(nameof(UnlockPlayerControlsServerRpc), 1f); // Lock for 1 second
+        }
+    }
+
+    [ClientRpc]
+    private void LockPlayerControlsClientRpc(ulong clientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId == clientId)
+        {
+            DisableControls();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)] // Allow non-owners to call this
+    private void UnlockPlayerControlsServerRpc()
+    {
+        UnlockPlayerControlsClientRpc(NetworkManager.Singleton.LocalClientId); // Use current client to unlock
+    }
+
+    [ClientRpc]
+    private void UnlockPlayerControlsClientRpc(ulong clientId)
+    {
+        if (NetworkManager.Singleton.LocalClientId == clientId)
+        {
+            // Re-enable controls after hit cooldown
+            this.enabled = true;
+            playerCollider.isTrigger = false;
+            rb.bodyType = RigidbodyType2D.Dynamic;
         }
     }
 
@@ -145,27 +172,6 @@ public class PlayerController : NetworkBehaviour
     private void NotifyDeathClientRpc()
     {
         FSM.RequestStateChange("Death");
-    }
-
-    [ClientRpc]
-    private void LockPlayerControlsClientRpc()
-    {
-        DisableControls();  // Disable controls when hit
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void UnlockPlayerControlsServerRpc()
-    {
-        UnlockPlayerControlsClientRpc();  // Unlock controls after the hit recovery time
-    }
-
-    [ClientRpc]
-    private void UnlockPlayerControlsClientRpc()
-    {
-        // Re-enable controls after hit cooldown
-        this.enabled = true;
-        playerCollider.isTrigger = false;
-        rb.bodyType = RigidbodyType2D.Dynamic;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -189,15 +195,16 @@ public class PlayerController : NetworkBehaviour
     {
         if (attackCollider != null)
         {
-            attackCollider.enabled = isActive;
+            attackCollider.enabled = isActive; // Enable or disable the attack collider
         }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Enemy"))
+        if (other.CompareTag("Enemy")) // Check if the collided object is an enemy
         {
-            other.GetComponent<PlayerController>().TakeDamageServerRpc(10);
+            Debug.Log("attack! sended");
+            other.GetComponent<PlayerController>().TakeDamageServerRpc(10, NetworkManager.Singleton.LocalClientId); // Replace with your damage logic
         }
     }
 
