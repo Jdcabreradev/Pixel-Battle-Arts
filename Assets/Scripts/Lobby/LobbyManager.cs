@@ -6,6 +6,7 @@ using Unity.Services.Core;
 using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class LobbyManager : MonoBehaviour {
 
@@ -65,6 +66,23 @@ public class LobbyManager : MonoBehaviour {
         //HandleRefreshLobbyList(); // Disabled Auto Refresh for testing with multiple builds
         HandleLobbyHeartbeat();
         HandleLobbyPolling();
+        CheckLobbyFull();
+    }
+
+    // New method to check if the lobby is full
+    private void CheckLobbyFull()
+    {
+        if (joinedLobby != null && joinedLobby.Players.Count >= joinedLobby.MaxPlayers)
+        {
+            Debug.Log("Lobby is full! Transitioning to game scene...");
+            ChangeScene("NetScene"); // Replace "GameScene" with your actual scene name
+        }
+    }
+
+    private void ChangeScene(string sceneName)
+    {
+        // Call this to transition to the specified scene
+        SceneManager.LoadScene(sceneName);
     }
 
     public async void Authenticate(string playerName) {
