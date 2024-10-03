@@ -21,7 +21,6 @@ public class HitState : State
 
     public override void OnExit()
     {
-        // Re-enable controls after hit state ends
-        playerController.UnlockControls();
+
     }
 }
