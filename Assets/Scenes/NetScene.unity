@@ -271,7 +271,7 @@ GameObject:
   - component: {fileID: 318037701}
   m_Layer: 0
   m_Name: Square
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -557,7 +557,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 950338178}
-    PlayerPrefab: {fileID: 5720300538710465930, guid: fd328c595e9359d46982ed743c2ca6c4, type: 3}
+    PlayerPrefab: {fileID: 8042652521737759850, guid: 4e3986429ec885043ae5fc0004411bfa, type: 3}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: 344169c22a9e3d4429205cf1e5427cf8, type: 2}
@@ -1353,7 +1353,7 @@ Camera:
     x: 0
     y: 0
     width: 1
-    height: 1
+    height: 0.99967617
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
