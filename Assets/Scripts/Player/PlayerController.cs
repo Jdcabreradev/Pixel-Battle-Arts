@@ -189,5 +189,6 @@ public class PlayerController : NetworkBehaviour
         // Disable any input processing or movement
         this.enabled = false; // Disables this script
         this.playerCollider.isTrigger = true;
+        this.rb.bodyType = RigidbodyType2D.Static;
     }
 }
