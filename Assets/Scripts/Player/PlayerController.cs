@@ -15,13 +15,12 @@ public class PlayerController : NetworkBehaviour
     private Collider2D attackCollider; // Declare attack collider
     private Collider2D playerCollider;
 
-
     public int Health = 100; // Player health
     public float attackCooldown = 1f; // Cooldown for attacks
     private float lastAttackTime = -1f; // Tracks the last time an attack was performed
 
     private void Awake()
-    {   
+    {
         Animator = GetComponent<Animator>();
         playerCollider = GetComponent<Collider2D>();
         rb = GetComponent<Rigidbody2D>();
@@ -44,7 +43,7 @@ public class PlayerController : NetworkBehaviour
         FSM.AddState("Fall", fallState);
         FSM.AddState("Attack", attackState);
         FSM.AddState("Hit", hitState);
-        FSM.AddState("Death",deathState);
+        FSM.AddState("Death", deathState);
 
         FSM.SetStartState("Idle");
         FSM.Init();
@@ -111,7 +110,6 @@ public class PlayerController : NetworkBehaviour
 
     public bool IsGrounded()
     {
-        // Implement ground check logic here
         return isGrounded;
     }
 
@@ -133,22 +131,42 @@ public class PlayerController : NetworkBehaviour
         if (Health <= 0)
         {
             FSM.RequestStateChange("Death");
-            // Optionally notify clients of the death
             NotifyDeathClientRpc();
         }
         else
         {
             FSM.RequestStateChange("Hit");
+            LockPlayerControlsClientRpc();
+            Invoke(nameof(UnlockPlayerControlsServerRpc), 1f); // Lock for 1 second
         }
     }
 
     [ClientRpc]
     private void NotifyDeathClientRpc()
     {
-        // Play death animation or do any additional client-side logic
         FSM.RequestStateChange("Death");
     }
 
+    [ClientRpc]
+    private void LockPlayerControlsClientRpc()
+    {
+        DisableControls();  // Disable controls when hit
+    }
+
+    [ServerRpc]
+    private void UnlockPlayerControlsServerRpc()
+    {
+        UnlockPlayerControlsClientRpc();  // Unlock controls after the hit recovery time
+    }
+
+    [ClientRpc]
+    private void UnlockPlayerControlsClientRpc()
+    {
+        // Re-enable controls after hit cooldown
+        this.enabled = true;
+        playerCollider.isTrigger = false;
+        rb.bodyType = RigidbodyType2D.Dynamic;
+    }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -171,24 +189,29 @@ public class PlayerController : NetworkBehaviour
     {
         if (attackCollider != null)
         {
-            attackCollider.enabled = isActive; // Enable or disable the attack collider
+            attackCollider.enabled = isActive;
         }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Enemy")) // Check if the collided object is an enemy
+        if (other.CompareTag("Enemy"))
         {
-            Debug.Log("attack! sended");
-            // Call a method on the enemy to deal damage
-            other.GetComponent<PlayerController>().TakeDamageServerRpc(10); // Replace with your damage logic
+            other.GetComponent<PlayerController>().TakeDamageServerRpc(10);
         }
     }
+
     public void DisableControls()
     {
-        // Disable any input processing or movement
-        this.enabled = false; // Disables this script
-        this.playerCollider.isTrigger = true;
-        this.rb.bodyType = RigidbodyType2D.Static;
+        this.enabled = false;  // Disables this script, preventing player actions
+        playerCollider.isTrigger = true;
+        rb.bodyType = RigidbodyType2D.Static;
+    }
+
+    public void UnlockControls()
+    {
+        this.enabled = true;
+        playerCollider.isTrigger = false;
+        rb.bodyType = RigidbodyType2D.Dynamic;
     }
 }

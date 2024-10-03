@@ -1,4 +1,3 @@
-using UnityEngine;
 using UnityHFSM;
 
 public class DeathState : State
@@ -12,21 +11,17 @@ public class DeathState : State
 
     public override void OnEnter()
     {
-        // Play death animation
+        playerController.DisableControls();  // Disable everything on death
         playerController.Animator.Play("Death");
-
-        // Disable player controls or any other relevant logic
-        playerController.DisableControls(); // Implement this method to disable controls
     }
 
     public override void OnLogic()
     {
-        // Optionally, you can implement logic to handle what happens during death
-        // For example, waiting for a certain time before restarting or showing a game over screen
+        // No further logic, player is dead and controls are locked
     }
 
     public override void OnExit()
     {
-        // Optional: Cleanup before exiting the death state, if needed
+        // Handle respawn or cleanup logic here if necessary
     }
 }
