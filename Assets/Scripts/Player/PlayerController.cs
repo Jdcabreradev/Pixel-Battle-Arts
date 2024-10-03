@@ -122,12 +122,13 @@ public class PlayerController : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void TakeDamageServerRpc(int damage, ulong attackerClientId)
+    public void TakeDamageServerRpc(int damage)
     {
         Health -= damage;
 
         if (Health <= 0)
         {
+            this.DisableControls();
             FSM.RequestStateChange("Death");
             NotifyDeathClientRpc();
         }
@@ -140,7 +141,6 @@ public class PlayerController : NetworkBehaviour
     [ClientRpc]
     private void NotifyDeathClientRpc()
     {
-        this.DisableControls();
         FSM.RequestStateChange("Death");
     }
 
@@ -174,7 +174,7 @@ public class PlayerController : NetworkBehaviour
         if (other.CompareTag("Enemy")) // Check if the collided object is an enemy
         {
             Debug.Log("attack! sended");
-            other.GetComponent<PlayerController>().TakeDamageServerRpc(10, NetworkManager.Singleton.LocalClientId); // Replace with your damage logic
+            other.GetComponent<PlayerController>().TakeDamageServerRpc(10); // Replace with your damage logic
         }
     }
 

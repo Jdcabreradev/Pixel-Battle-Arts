@@ -11,8 +11,6 @@ public class HitState : State
 
     public override void OnEnter()
     {
-        // Disable controls as soon as hit state is entered
-        playerController.DisableControls();
         playerController.Animator.Play("Hit");
     }
 
