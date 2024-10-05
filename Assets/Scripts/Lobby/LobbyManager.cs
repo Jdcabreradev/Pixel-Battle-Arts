@@ -9,7 +9,7 @@ using Unity.Services.Lobbies.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class LobbyManager : MonoBehaviour {
+public class LobbyManager : NetworkBehaviour{
 
 
     public static LobbyManager Instance { get; private set; }
@@ -67,18 +67,37 @@ public class LobbyManager : MonoBehaviour {
         //HandleRefreshLobbyList(); // Disabled Auto Refresh for testing with multiple builds
         HandleLobbyHeartbeat();
         HandleLobbyPolling();
-        CheckLobbyFull();
-    }
-
-    // New method to check if the lobby is full
-    private void CheckLobbyFull()
-    {
-        if (joinedLobby != null && joinedLobby.Players.Count >= joinedLobby.MaxPlayers)
+        if (IsServer) // Only the server checks for lobby full
         {
-            Debug.Log("Lobby is full! Transitioning to game scene...");
-            NetworkManager.Singleton.SceneManager.LoadScene("NetScene", LoadSceneMode.Single);
+            CheckLobbyFull();
         }
     }
+    private  void CheckLobbyFull()
+    {
+        if (joinedLobby == null || joinedLobby.Players == null)
+        {
+            Debug.LogWarning("Joined lobby or players list is null.");
+            return;
+        }
+
+        if (joinedLobby.Players.Count >= joinedLobby.MaxPlayers)
+        {
+            Debug.Log("Lobby is full! Transitioning to game scene...");
+            // Call the RPC to change the scene
+            TransitionToGameSceneServerRpc();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)] // Allow clients to call this without ownership
+    private void TransitionToGameSceneServerRpc()
+    {
+        // Log for debugging
+        Debug.Log("Transitioning to game scene for all players...");
+
+        // Load the new scene
+        NetworkManager.Singleton.SceneManager.LoadScene("NetScene", LoadSceneMode.Single);
+    }
+
 
     public async void Authenticate(string playerName) {
         this.playerName = playerName;

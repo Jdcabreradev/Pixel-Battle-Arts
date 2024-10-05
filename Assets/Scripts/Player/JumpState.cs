@@ -5,7 +5,7 @@ public class JumpState : State
 {
     private PlayerController playerController;
     private Rigidbody2D rb;
-    private float jumpForce = 15f;
+    private float jumpForce = 9f;
 
     public JumpState(PlayerController playerController, Rigidbody2D rb)
     {
