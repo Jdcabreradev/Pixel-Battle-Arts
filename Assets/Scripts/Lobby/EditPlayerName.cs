@@ -36,7 +36,7 @@ public class EditPlayerName : MonoBehaviour {
                 OnNameChanged?.Invoke(this, EventArgs.Empty);
 
                 //Usado para autentificar en los servicios de Unity de una que se haya cambiado el nombre
-                LobbyManager.Instance.Authenticate(Instance.GetPlayerName());
+                // LobbyManager.Instance.Authenticate(Instance.GetPlayerName());
 
                 LobbyListUI.Instance.ShowLobbyListUI(); // Implementar el show
 

@@ -10,47 +10,87 @@ using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Threading.Tasks;
 
 public class TestRelayConn : MonoBehaviour
 {
     public Button hostBtn;
     public Button clientBtn;
     public TMP_InputField inputField;
+    
+    // El número máximo de jugadores se puede gestionar desde el LobbyManager
+    private int maxPlayers = 3;
+    private string joinCode;
+
     private async void Start()
     {
+        // Inicializamos los servicios y autenticamos al usuario de forma anónima
         await UnityServices.InitializeAsync();
-
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
-        hostBtn.onClick.AddListener(CreateRelay);
-        clientBtn.onClick.AddListener(JoinRelay);
+        // Asignamos listeners a los botones
+        hostBtn.onClick.AddListener(async () => await CreateRelay());
+        clientBtn.onClick.AddListener(async () => await JoinRelay());
     }
 
-    private async void CreateRelay()
+    public async Task<string> CreateRelay()
     {
         try
         {
-           Allocation allocation = await RelayService.Instance.CreateAllocationAsync(3);
-            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-            Debug.Log(joinCode);
+            // Creamos la sesión con Relay para un máximo de jugadores
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
+            
+            // Obtenemos el código para que los jugadores se unan a la sesión
+            joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            Debug.Log("Código de unión generado: " + joinCode);
+            
 
-            RelayServerData relayServerData = new RelayServerData(allocation,"dtls");
+            // Configuramos los datos del servidor Relay
+            RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
+
+            // Iniciamos el host (servidor)
             NetworkManager.Singleton.StartHost();
+            Debug.Log("Se creeooooop");
+            return joinCode;
+
+            
         }
-        catch (RelayServiceException e) { Debug.LogException(e); }
+        catch (RelayServiceException e) 
+        { 
+            Debug.LogException(e); 
+             return null;
+        }
     }
 
-    private async void JoinRelay()
+    public async Task JoinRelay()
     {
         try
         {
-            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(inputField.text);
+            // Validamos que el código ingresado no esté vacío
+            string enteredJoinCode = inputField.text;
+            if (string.IsNullOrEmpty(enteredJoinCode))
+            {
+                Debug.LogWarning("El código de unión no puede estar vacío");
+                return;
+            }
 
+            // Unimos al cliente a la sesión Relay utilizando el código proporcionado
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(enteredJoinCode);
+            
+            // Configuramos los datos del servidor Relay para el cliente
             RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
+
+            // Iniciamos el cliente
             NetworkManager.Singleton.StartClient();
+
+            // Podrías notificar al LobbyManager para gestionar la UI o las transiciones
+            // LobbyManager.Instance.OnClientJoined(); // Ejemplo opcional
         }
-        catch (RelayServiceException e) { Debug.LogException(e); }
+        catch (RelayServiceException e) 
+        { 
+            Debug.LogException(e); 
+        }
     }
 }
