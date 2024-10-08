@@ -63,8 +63,9 @@ public class LobbyManager : NetworkBehaviour
     private bool isRelayConfigured = false;
     private string playerName;
 
-    [SerializeField] private RelayManager relayConn;
+    private bool sceneLoaded = false;
 
+    [SerializeField] private RelayManager relayConn;
 
 
     private void Start()
@@ -74,6 +75,7 @@ public class LobbyManager : NetworkBehaviour
         {
             Debug.LogError("No se encontro el RelayManager!!.");
         }
+
     }
     private void Awake()
     {
@@ -86,47 +88,49 @@ public class LobbyManager : NetworkBehaviour
         //HandleRefreshLobbyList(); // Disabled Auto Refresh for testing with multiple builds
         HandleLobbyHeartbeat();
         HandleLobbyPolling();
-        CheckLobbyFull();
 
     }
 
     private void CheckLobbyFull()
     {
-        if (joinedLobby == null || joinedLobby.Players == null)
+        if (joinedLobby != null && joinedLobby.Players.Count >= joinedLobby.MaxPlayers)
         {
-            Debug.LogWarning("Joined lobby or players list is null.");
-            return;
-        }
+            Debug.Log("El lobby está lleno!");
 
-        if (joinedLobby.Players.Count >= joinedLobby.MaxPlayers)
-        {
-            Debug.Log("Lobby is full! Setting up Relay...");
-
-            if (IsLobbyHost())
+            if (IsLobbyHost() && !isRelayConfigured && !sceneLoaded) // Verificar si la escena ya ha sido cargada
             {
-                if (!isRelayConfigured)
-                {
-                    isRelayConfigured = true;
-
-                    // Cargar la escena después de configurar el Relay
-                    NetworkManager.Singleton.SceneManager.LoadScene("Gameplay2", LoadSceneMode.Single);
-                }
+                // Solo el host carga la escena cuando el lobby está lleno
+                Debug.Log("Host cargando la escena...");
+                LoadGameplayScene();
+                
             }
             else
             {
-                // Los clientes no deben llamar a LoadScene directamente
-                // Pueden esperar a que el host inicie la carga de la escena
-                Debug.Log("El lobby está lleno, esperando al host para cargar la escena...");
+                // Los clientes esperan a que el host cargue la escena
+                Debug.Log("Esperando al host para cargar la escena...");
             }
-            // else
-            // {
-            //     isRelayConfigured = true;
-            //     // Si no es el host, pero el lobby está lleno, cambiar a la nueva escena
-            //     Debug.Log("El lobby está lleno y el jugador se unió correctamente. Cargando la escena del juego...");
-            //     NetworkManager.Singleton.SceneManager.LoadScene("NetScene", LoadSceneMode.Single);
-            // }
         }
     }
+
+    private void LoadGameplayScene()
+    {
+        sceneLoaded = true; // Marcar que la escena ha sido cargada
+        StartCoroutine(WaitForClients());
+        
+    }
+
+     private IEnumerator WaitForClients()
+    {
+        // Esperar 3 segundos
+        yield return new WaitForSeconds(3f);
+        
+
+        NetworkManager.Singleton.SceneManager.LoadScene("Gameplay2", LoadSceneMode.Single);
+
+    }
+
+
+
 
     public async void UpdateLobbyRelayCode(string relayJoinCode)
     {
@@ -135,9 +139,9 @@ public class LobbyManager : NetworkBehaviour
             Lobby lobby = await Lobbies.Instance.UpdateLobbyAsync(joinedLobby.Id, new UpdateLobbyOptions
             {
                 Data = new Dictionary<string, DataObject>
-                {
-                    {"RelayCode", new DataObject(DataObject.VisibilityOptions.Member, relayJoinCode) }
-                }
+                    {
+                        {"RelayCode", new DataObject(DataObject.VisibilityOptions.Member, relayJoinCode) }
+                    }
             });
             Debug.Log("Se guardo de forma extiosa el codigo del lobby");
             joinedLobby = lobby;
@@ -196,6 +200,7 @@ public class LobbyManager : NetworkBehaviour
                 Debug.Log("Heartbeat");
                 await LobbyService.Instance.SendHeartbeatPingAsync(joinedLobby.Id);
             }
+            CheckLobbyFull();
         }
     }
 
@@ -216,12 +221,13 @@ public class LobbyManager : NetworkBehaviour
                 if (!IsPlayerInLobby())
                 {
                     // Player was kicked out of this lobby
-                    Debug.Log("Kicked from Lobby!");
+                    Debug.Log("Expulsado del lobby!");
 
                     OnKickedFromLobby?.Invoke(this, new LobbyEventArgs { lobby = joinedLobby });
 
                     joinedLobby = null;
                 }
+
             }
         }
     }
@@ -255,9 +261,9 @@ public class LobbyManager : NetworkBehaviour
     private Player GetPlayer()
     {
         return new Player(AuthenticationService.Instance.PlayerId, null, new Dictionary<string, PlayerDataObject> {
-            { KEY_PLAYER_NAME, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerName) },
-            { KEY_PLAYER_CHARACTER, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, PlayerCharacter.Wizard.ToString()) }
-        });
+                { KEY_PLAYER_NAME, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerName) },
+                { KEY_PLAYER_CHARACTER, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, PlayerCharacter.Wizard.ToString()) }
+            });
     }
 
     public void ChangeGameMode()
@@ -291,8 +297,8 @@ public class LobbyManager : NetworkBehaviour
             Player = player,
             IsPrivate = isPrivate,
             Data = new Dictionary<string, DataObject> {
-                { KEY_GAME_MODE, new DataObject(DataObject.VisibilityOptions.Public, gameMode.ToString()) }
-            }
+                    { KEY_GAME_MODE, new DataObject(DataObject.VisibilityOptions.Public, gameMode.ToString()) }
+                }
         };
 
         Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, options);
@@ -321,18 +327,18 @@ public class LobbyManager : NetworkBehaviour
 
             // Filter for open lobbies only
             options.Filters = new List<QueryFilter> {
-                new QueryFilter(
-                    field: QueryFilter.FieldOptions.AvailableSlots,
-                    op: QueryFilter.OpOptions.GT,
-                    value: "0")
-            };
+                    new QueryFilter(
+                        field: QueryFilter.FieldOptions.AvailableSlots,
+                        op: QueryFilter.OpOptions.GT,
+                        value: "0")
+                };
 
             // Order by newest lobbies first
             options.Order = new List<QueryOrder> {
-                new QueryOrder(
-                    asc: false,
-                    field: QueryOrder.FieldOptions.Created)
-            };
+                    new QueryOrder(
+                        asc: false,
+                        field: QueryOrder.FieldOptions.Created)
+                };
 
             QueryResponse lobbyListQueryResponse = await Lobbies.Instance.QueryLobbiesAsync();
 
@@ -386,16 +392,11 @@ public class LobbyManager : NetworkBehaviour
             await relayConn.JoinRelay(relayJoinCode); // Unirse al Relay
             Debug.Log("Se unio al relay");
             isRelayConfigured = true;
-            // relayConn.OnRelayJoined += HandleRelayJoined;
+
+
         }
     }
 
-    private void HandleRelayJoined()
-    {
-        Debug.Log("Successfully joined the Relay.");
-        // Cargar la escena aquí después de unirse al Relay con éxito
-        NetworkManager.Singleton.SceneManager.LoadScene("NetScene", LoadSceneMode.Single);
-    }
 
     public async void UpdatePlayerName(string playerName)
     {
@@ -408,12 +409,12 @@ public class LobbyManager : NetworkBehaviour
                 UpdatePlayerOptions options = new UpdatePlayerOptions();
 
                 options.Data = new Dictionary<string, PlayerDataObject>() {
-                    {
-                        KEY_PLAYER_NAME, new PlayerDataObject(
-                            visibility: PlayerDataObject.VisibilityOptions.Public,
-                            value: playerName)
-                    }
-                };
+                        {
+                            KEY_PLAYER_NAME, new PlayerDataObject(
+                                visibility: PlayerDataObject.VisibilityOptions.Public,
+                                value: playerName)
+                        }
+                    };
 
                 string playerId = AuthenticationService.Instance.PlayerId;
 
@@ -438,12 +439,12 @@ public class LobbyManager : NetworkBehaviour
                 UpdatePlayerOptions options = new UpdatePlayerOptions();
 
                 options.Data = new Dictionary<string, PlayerDataObject>() {
-                    {
-                        KEY_PLAYER_CHARACTER, new PlayerDataObject(
-                            visibility: PlayerDataObject.VisibilityOptions.Public,
-                            value: playerCharacter.ToString())
-                    }
-                };
+                        {
+                            KEY_PLAYER_CHARACTER, new PlayerDataObject(
+                                visibility: PlayerDataObject.VisibilityOptions.Public,
+                                value: playerCharacter.ToString())
+                        }
+                    };
 
                 string playerId = AuthenticationService.Instance.PlayerId;
 
@@ -519,8 +520,8 @@ public class LobbyManager : NetworkBehaviour
             Lobby lobby = await Lobbies.Instance.UpdateLobbyAsync(joinedLobby.Id, new UpdateLobbyOptions
             {
                 Data = new Dictionary<string, DataObject> {
-                    { KEY_GAME_MODE, new DataObject(DataObject.VisibilityOptions.Public, gameMode.ToString()) }
-                }
+                        { KEY_GAME_MODE, new DataObject(DataObject.VisibilityOptions.Public, gameMode.ToString()) }
+                    }
             });
 
             joinedLobby = lobby;
