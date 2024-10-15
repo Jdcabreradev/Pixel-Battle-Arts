@@ -101,8 +101,8 @@ public class LobbyManager : NetworkBehaviour
             {
                 // Solo el host carga la escena cuando el lobby está lleno
                 Debug.Log("Host cargando la escena...");
-                LoadGameplayScene();
-                
+                NetworkManager.Singleton.SceneManager.LoadScene("Gameplay2", LoadSceneMode.Single);
+
             }
             else
             {
