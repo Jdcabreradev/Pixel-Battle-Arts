@@ -66,6 +66,7 @@ public class LobbyManager : NetworkBehaviour
     private bool sceneLoaded = false;
 
     [SerializeField] private RelayManager relayConn;
+    [SerializeField] private GameObject[] playerPrefab;
 
 
     private void Start()
@@ -101,7 +102,7 @@ public class LobbyManager : NetworkBehaviour
             {
                 // Solo el host carga la escena cuando el lobby está lleno
                 Debug.Log("Host cargando la escena...");
-                NetworkManager.Singleton.SceneManager.LoadScene("Gameplay2", LoadSceneMode.Single);
+                NetworkManager.Singleton.SceneManager.LoadScene("Gameplay1", LoadSceneMode.Single);
 
             }
             else
@@ -125,7 +126,7 @@ public class LobbyManager : NetworkBehaviour
         yield return new WaitForSeconds(3f);
         
 
-        NetworkManager.Singleton.SceneManager.LoadScene("Gameplay2", LoadSceneMode.Single);
+        NetworkManager.Singleton.SceneManager.LoadScene("Gameplay1", LoadSceneMode.Single);
 
     }
 
@@ -315,7 +316,19 @@ public class LobbyManager : NetworkBehaviour
 
         Debug.Log("Created Lobby " + lobby.Name);
 
+        NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += SceneManager_OnLoadEventCompleted;
+    }
 
+    private void SceneManager_OnLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        if(IsHost && sceneName == "Gameplay1")
+        {
+            foreach (ulong id in clientsCompleted)
+            {
+                GameObject player = Instantiate(playerPrefab[0]);
+                player.GetComponent<NetworkObject>().SpawnAsPlayerObject(id,true);
+            }
+        }
     }
 
     public async void RefreshLobbyList()

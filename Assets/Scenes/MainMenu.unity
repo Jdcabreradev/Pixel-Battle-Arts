@@ -406,10 +406,10 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.29282576
+    x: 0
     y: 0
-    width: 0.5309907
-    height: 0.53125
+    width: 0.9991696
+    height: 0.99999994
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -5211,6 +5211,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   relayConn: {fileID: 818158581}
+  playerPrefab:
+  - {fileID: 8042652521737759850, guid: 4e3986429ec885043ae5fc0004411bfa, type: 3}
 --- !u!4 &818158579
 Transform:
   m_ObjectHideFlags: 0

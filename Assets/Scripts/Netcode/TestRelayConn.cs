@@ -17,80 +17,134 @@ public class TestRelayConn : MonoBehaviour
     public Button hostBtn;
     public Button clientBtn;
     public TMP_InputField inputField;
-    
-    // El número máximo de jugadores se puede gestionar desde el LobbyManager
-    private int maxPlayers = 3;
+
+    // Assign the player prefab via the Inspector or programmatically
+    public GameObject playerPrefab;
+
+    // Assign spawn points via the Inspector
+    public Transform[] spawnPoints;
+    private int nextSpawnIndex = 0; // Tracks the next spawn point to use
+
+    private int maxPlayers = 3; // Max players for the Relay
     private string joinCode;
 
     private async void Start()
     {
-        // Inicializamos los servicios y autenticamos al usuario de forma anónima
+        // Initialize services and authenticate user anonymously
         await UnityServices.InitializeAsync();
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
-        // Asignamos listeners a los botones
+        // Assign listeners to buttons
         hostBtn.onClick.AddListener(async () => await CreateRelay());
         clientBtn.onClick.AddListener(async () => await JoinRelay());
+
+        // Subscribe to client connection event
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
     }
 
+    private void OnDestroy()
+    {
+        // Unsubscribe from the event when the object is destroyed
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+        }
+    }
+
+    // Called when a client connects (either host or client)
+    private void OnClientConnected(ulong clientId)
+    {
+        // Only spawn a player for clients other than the host
+        if (NetworkManager.Singleton.IsServer && clientId != NetworkManager.Singleton.LocalClientId)
+        {
+            SpawnPlayer(clientId);
+        }
+    }
+
+    // Spawn a player at the next available spawn point
+    private void SpawnPlayer(ulong clientId)
+    {
+        if (playerPrefab == null)
+        {
+            Debug.LogError("PlayerPrefab is not assigned!");
+            return;
+        }
+
+        Transform spawnTransform = GetNextSpawnPoint();
+
+        // Instantiate the player object
+        GameObject playerInstance = Instantiate(playerPrefab, spawnTransform.position, spawnTransform.rotation);
+        playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
+    }
+
+    // Get the next spawn point in a round-robin manner
+    private Transform GetNextSpawnPoint()
+    {
+        Transform spawnPoint = spawnPoints[nextSpawnIndex];
+        nextSpawnIndex = (nextSpawnIndex + 1) % spawnPoints.Length;
+        return spawnPoint;
+    }
+
+    // Host creates a relay session and starts the server
     public async Task<string> CreateRelay()
     {
         try
         {
-            // Creamos la sesión con Relay para un máximo de jugadores
+            // Create a relay allocation for maxPlayers
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
-            
-            // Obtenemos el código para que los jugadores se unan a la sesión
-            joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-            Debug.Log("Código de unión generado: " + joinCode);
-            
 
-            // Configuramos los datos del servidor Relay
+            // Get the join code for players to connect
+            joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            Debug.Log("Join Code: " + joinCode);
+
+            // Set relay server data
             RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
 
-            // Iniciamos el host (servidor)
+            // Start the host (server)
             NetworkManager.Singleton.StartHost();
-            Debug.Log("Se creeooooop");
-            return joinCode;
+            Debug.Log("Host started");
 
-            
+            // The host spawns its player immediately after starting the host
+            SpawnPlayer(NetworkManager.Singleton.LocalClientId);
+
+            return joinCode;
         }
-        catch (RelayServiceException e) 
-        { 
-            Debug.LogException(e); 
-             return null;
+        catch (RelayServiceException e)
+        {
+            Debug.LogException(e);
+            return null;
         }
     }
 
+    // Client joins a relay session
     public async Task JoinRelay()
     {
         try
         {
-            // Validamos que el código ingresado no esté vacío
+            // Validate the join code
             string enteredJoinCode = inputField.text;
             if (string.IsNullOrEmpty(enteredJoinCode))
             {
-                Debug.LogWarning("El código de unión no puede estar vacío");
+                Debug.LogWarning("Join code cannot be empty");
                 return;
             }
 
-            // Unimos al cliente a la sesión Relay utilizando el código proporcionado
+            // Join the relay allocation using the join code
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(enteredJoinCode);
-            
-            // Configuramos los datos del servidor Relay para el cliente
+
+            // Set relay server data for the client
             RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
 
-            // Iniciamos el cliente
+            // Start the client
             NetworkManager.Singleton.StartClient();
 
-            // Podrías notificar al LobbyManager para gestionar la UI o las transiciones
-            // LobbyManager.Instance.OnClientJoined(); // Ejemplo opcional
+            Debug.Log("Client joined");
         }
-        catch (RelayServiceException e) 
-        { 
-            Debug.LogException(e); 
+        catch (RelayServiceException e)
+        {
+            Debug.LogException(e);
         }
     }
 }
