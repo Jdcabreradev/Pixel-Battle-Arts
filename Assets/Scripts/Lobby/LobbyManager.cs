@@ -328,6 +328,8 @@ public class LobbyManager : NetworkBehaviour
                 GameObject player = Instantiate(playerPrefab[0]);
                 player.GetComponent<NetworkObject>().SpawnAsPlayerObject(id,true);
             }
+            GameObject server = Instantiate(playerPrefab[0]);
+            server.GetComponent<NetworkObject>().SpawnAsPlayerObject(NetworkManager.Singleton.LocalClientId, true);
         }
     }
 
