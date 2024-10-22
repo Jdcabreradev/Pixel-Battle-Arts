@@ -18,66 +18,73 @@ public class TestRelayConn : MonoBehaviour
     public Button clientBtn;
     public TMP_InputField inputField;
 
-    // Assign the player prefab via the Inspector or programmatically
-    public GameObject playerPrefab;
+    // Lista de prefabs de jugadores asignados desde el Inspector
+    public List<GameObject> playerPrefabs;
 
-    // Assign spawn points via the Inspector
+    // Puntos de spawn asignados desde el Inspector
     public Transform[] spawnPoints;
-    private int nextSpawnIndex = 0; // Tracks the next spawn point to use
+    private int nextSpawnIndex = 0; // Rastrea el siguiente punto de spawn a utilizar
 
-    private int maxPlayers = 3; // Max players for the Relay
+    private int maxPlayers = 3; // Máximo número de jugadores en la partida
     private string joinCode;
+    private bool hostPlayerSpawned = false; // Controla si el jugador del host ya fue spawneado
 
     private async void Start()
     {
-        // Initialize services and authenticate user anonymously
+        // Inicializar servicios y autenticar al usuario de manera anónima
         await UnityServices.InitializeAsync();
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
-        // Assign listeners to buttons
+        // Asignar listeners a los botones
         hostBtn.onClick.AddListener(async () => await CreateRelay());
         clientBtn.onClick.AddListener(async () => await JoinRelay());
 
-        // Subscribe to client connection event
+        // Suscribirse al evento de conexión de cliente
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
     }
 
     private void OnDestroy()
     {
-        // Unsubscribe from the event when the object is destroyed
+        // Desuscribirse del evento cuando se destruye el objeto
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
         }
     }
 
-    // Called when a client connects (either host or client)
+    // Se llama cuando un cliente se conecta (incluyendo el host)
     private void OnClientConnected(ulong clientId)
     {
-        // Only spawn a player for clients other than the host
+        // El servidor spawnea el jugador solo para los clientes que no sean el host
         if (NetworkManager.Singleton.IsServer && clientId != NetworkManager.Singleton.LocalClientId)
         {
             SpawnPlayer(clientId);
         }
     }
 
-    // Spawn a player at the next available spawn point
+    // Spawnear un jugador en el siguiente punto de spawn disponible
     private void SpawnPlayer(ulong clientId)
     {
-        if (playerPrefab == null)
+        if (playerPrefabs == null || playerPrefabs.Count == 0)
         {
-            Debug.LogError("PlayerPrefab is not assigned!");
+            Debug.LogError("No hay prefabs de jugador asignados!");
             return;
         }
 
+        // Obtener un prefab de jugador aleatorio
+        GameObject randomPlayerPrefab = playerPrefabs[Random.Range(0, playerPrefabs.Count)];
+
+        // Obtener el siguiente punto de spawn
         Transform spawnTransform = GetNextSpawnPoint();
 
-        // Instantiate the player object
-        GameObject playerInstance = Instantiate(playerPrefab, spawnTransform.position, spawnTransform.rotation);
-        playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
+        // Instanciar el objeto jugador
+        GameObject playerInstance = Instantiate(randomPlayerPrefab, spawnTransform.position, spawnTransform.rotation);
+
+        // Spawnear el objeto como jugador en la red
+        playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, true);
     }
 
-    // Get the next spawn point in a round-robin manner
+    // Obtener el siguiente punto de spawn de manera cíclica
     private Transform GetNextSpawnPoint()
     {
         Transform spawnPoint = spawnPoints[nextSpawnIndex];
@@ -85,28 +92,32 @@ public class TestRelayConn : MonoBehaviour
         return spawnPoint;
     }
 
-    // Host creates a relay session and starts the server
+    // El host crea una sesión de Relay y comienza el servidor
     public async Task<string> CreateRelay()
     {
         try
         {
-            // Create a relay allocation for maxPlayers
+            // Crear una asignación de relay para el número máximo de jugadores
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
 
-            // Get the join code for players to connect
+            // Obtener el código de unión para que otros jugadores se puedan unir
             joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
             Debug.Log("Join Code: " + joinCode);
 
-            // Set relay server data
+            // Establecer los datos del servidor Relay
             RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
 
-            // Start the host (server)
+            // Iniciar el host (servidor)
             NetworkManager.Singleton.StartHost();
-            Debug.Log("Host started");
+            Debug.Log("Host iniciado");
 
-            // The host spawns its player immediately after starting the host
-            SpawnPlayer(NetworkManager.Singleton.LocalClientId);
+            // El host spawnea su jugador solo si aún no lo ha hecho
+            if (!hostPlayerSpawned)
+            {
+                SpawnPlayer(NetworkManager.Singleton.LocalClientId);
+                hostPlayerSpawned = true; // Marcamos que ya se ha spawneado
+            }
 
             return joinCode;
         }
@@ -117,30 +128,30 @@ public class TestRelayConn : MonoBehaviour
         }
     }
 
-    // Client joins a relay session
+    // El cliente se une a una sesión de Relay
     public async Task JoinRelay()
     {
         try
         {
-            // Validate the join code
+            // Validar el código de unión
             string enteredJoinCode = inputField.text;
             if (string.IsNullOrEmpty(enteredJoinCode))
             {
-                Debug.LogWarning("Join code cannot be empty");
+                Debug.LogWarning("El código de unión no puede estar vacío");
                 return;
             }
 
-            // Join the relay allocation using the join code
+            // Unirse a la asignación de relay usando el código de unión
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(enteredJoinCode);
 
-            // Set relay server data for the client
+            // Establecer los datos del servidor Relay para el cliente
             RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
 
-            // Start the client
+            // Iniciar el cliente
             NetworkManager.Singleton.StartClient();
 
-            Debug.Log("Client joined");
+            Debug.Log("Cliente unido");
         }
         catch (RelayServiceException e)
         {

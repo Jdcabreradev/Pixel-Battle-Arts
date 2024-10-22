@@ -23625,7 +23625,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1097793082
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24226,7 +24226,9 @@ MonoBehaviour:
   hostBtn: {fileID: 1241128067}
   clientBtn: {fileID: 841680452}
   inputField: {fileID: 1359230645}
-  playerPrefab: {fileID: 8042652521737759850, guid: 4e3986429ec885043ae5fc0004411bfa, type: 3}
+  playerPrefabs:
+  - {fileID: 8042652521737759850, guid: 4e3986429ec885043ae5fc0004411bfa, type: 3}
+  - {fileID: 2214875072033811693, guid: 14f1cb08624413349a6d11047dabfcfc, type: 3}
   spawnPoints:
   - {fileID: 1454535278}
   - {fileID: 849189247}
@@ -34916,7 +34918,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &2040819293
 MonoBehaviour:
   m_ObjectHideFlags: 0
