@@ -81,7 +81,7 @@ public class TestRelayConn : MonoBehaviour
         GameObject playerInstance = Instantiate(randomPlayerPrefab, spawnTransform.position, spawnTransform.rotation);
 
         // Spawnear el objeto como jugador en la red
-        playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, true);
+        playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
     }
 
     // Obtener el siguiente punto de spawn de manera cíclica

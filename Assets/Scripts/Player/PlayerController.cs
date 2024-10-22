@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityHFSM;
+using UnityEngine.ProBuilder;
 
 public class PlayerController : NetworkBehaviour
 {
@@ -13,6 +14,10 @@ public class PlayerController : NetworkBehaviour
     private bool facingRight = true;  // Tracks if the player is facing right
     private Collider2D attackCollider; // Declare attack collider
     private Collider2D playerCollider;
+
+    public GameObject projectilePrefab; // Prefab del proyectil
+    public Transform projectileSpawnPoint; // Punto de salida del proyectil
+    public bool isRanged = false; // Define si el personaje es de rango
 
     public int Health = 100; // Player health
     public float attackCooldown = 1f; // Cooldown for attacks
@@ -69,10 +74,34 @@ public class PlayerController : NetworkBehaviour
 
         if (Input.GetMouseButtonDown(0)) // 0 is the left mouse button
         {
-            Attack();
+            if (isRanged)
+            {
+                ShootProjectile();
+            }
+            else
+            {
+                Attack();
+            }
         }
     }
 
+    public void ShootProjectile()
+    {
+        if (Time.time >= lastAttackTime + attackCooldown)
+        {
+            lastAttackTime = Time.time;
+            // Llamada para instanciar el proyectil en la red
+            ShootProjectileServerRpc();
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ShootProjectileServerRpc()
+    {
+        GameObject projectileInstance = Instantiate(projectilePrefab, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
+        projectileInstance.GetComponent<NetworkObject>().Spawn(true);  // Instancia el proyectil en la red
+        projectileInstance.GetComponent<Projectile  >().Initialize(this); // Inicializa el proyectil
+    }
     public void Flip(float horizontalInput)
     {
         if (horizontalInput > 0 && !facingRight)
