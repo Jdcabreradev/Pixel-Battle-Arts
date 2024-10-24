@@ -5,7 +5,7 @@ public class Projectile : NetworkBehaviour
 {
     public float speed = 10f;
     private Rigidbody2D rb;
-    public ulong projectileOwner;
+    private ulong projectileOwner;
 
     private Vector2 direction;
 

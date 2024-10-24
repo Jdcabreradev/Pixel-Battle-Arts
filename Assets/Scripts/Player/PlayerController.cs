@@ -37,10 +37,14 @@ public class PlayerController : NetworkBehaviour
     private void Awake()
     {
         Animator = GetComponent<Animator>();
-        playerCollider = GetComponent<Collider2D>();
         rb = GetComponent<Rigidbody2D>();
-        attackCollider = transform.Find("AttackCollider").GetComponent<Collider2D>();
-        audioSource = GetComponent<AudioSource>();  // Ensure we have an AudioSource component
+        playerCollider = GetComponent<Collider2D>();
+        audioSource = GetComponent<AudioSource>();
+        Transform attackColliderTransform = transform.Find("AttackCollider");
+        if (attackColliderTransform!=null)
+        {
+            attackCollider = attackColliderTransform.GetComponent<Collider2D>();
+        }
         SetAttackColliderActive(false); // Ensure it's disabled at start
 
         FSM = new StateMachine();

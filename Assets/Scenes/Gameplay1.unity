@@ -23871,14 +23871,14 @@ GameObject:
   m_Component:
   - component: {fileID: 1293859345}
   - component: {fileID: 1293859343}
-  - component: {fileID: 1293859344}
+  - component: {fileID: 1293859346}
   m_Layer: 0
   m_Name: ChangeCharacterManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1293859343
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23900,22 +23900,6 @@ MonoBehaviour:
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
---- !u!114 &1293859344
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1293859342}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9f1cc6cc783c48046a6b8c3d7aab1c4d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  characterPrefabs:
-  - {fileID: 2214875072033811693, guid: 14f1cb08624413349a6d11047dabfcfc, type: 3}
-  - {fileID: 8042652521737759850, guid: 4e3986429ec885043ae5fc0004411bfa, type: 3}
-  spawnPoint: {fileID: 957584124}
 --- !u!4 &1293859345
 Transform:
   m_ObjectHideFlags: 0
@@ -23925,12 +23909,32 @@ Transform:
   m_GameObject: {fileID: 1293859342}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.2543023, y: -4.674183, z: -0.73366326}
+  m_LocalPosition: {x: -1.02, y: -0.82, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1293859346
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1293859342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a90e1c9ba889124f80e470522786c14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spawnpoint: {fileID: 1293859345}
+  keyPrefabList:
+  - key: 282
+    prefab: {fileID: 2214875072033811693, guid: 14f1cb08624413349a6d11047dabfcfc, type: 3}
+  - key: 283
+    prefab: {fileID: 8042652521737759850, guid: 4e3986429ec885043ae5fc0004411bfa, type: 3}
+  - key: 284
+    prefab: {fileID: 2201363505319825845, guid: 38e50e8229fd8b840a360497bf8bfe85, type: 3}
 --- !u!1 &1318718658
 GameObject:
   m_ObjectHideFlags: 0
