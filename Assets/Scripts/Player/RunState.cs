@@ -23,10 +23,6 @@ public class RunState : State
 
     public override void OnLogic()
     {
-        if (rb.velocity.y > 0)
-        {
-            playerController.FSM.RequestStateChange("Fall");
-        }
         // Handle horizontal movement
         float horizontalInput = Input.GetAxisRaw("Horizontal");
         rb.velocity = new Vector2(horizontalInput * playerController.RunSpeed, rb.velocity.y);
