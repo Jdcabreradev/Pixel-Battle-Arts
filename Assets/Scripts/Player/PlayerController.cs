@@ -26,7 +26,7 @@ public class PlayerController : NetworkBehaviour
 
     private bool isDashing = false;
     private Vector2 dashTargetPosition;
-    public float dashDistance = 5f;  // La distancia del dash
+    public int dashDistance = 5;  // La distancia del dash
     public float dashDuration = 0.2f; // Duración del dash en segundos
     public float dashCooldown = 2f;
 
