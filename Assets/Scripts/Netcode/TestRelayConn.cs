@@ -1,3 +1,4 @@
+// Ajustado para asegurarse de que cada cliente sepa cuál es su jugador
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -55,10 +56,21 @@ public class TestRelayConn : MonoBehaviour
     // Se llama cuando un cliente se conecta (incluyendo el host)
     private void OnClientConnected(ulong clientId)
     {
-        // El servidor spawnea el jugador solo para los clientes que no sean el host
-        if (NetworkManager.Singleton.IsServer && clientId != NetworkManager.Singleton.LocalClientId)
+        // Solo el servidor (host) debe manejar el spawn de los personajes
+        if (NetworkManager.Singleton.IsServer)
         {
-            SpawnPlayer(clientId);
+            // Evitar que el host spawnee su jugador dos veces
+            if (clientId == NetworkManager.Singleton.LocalClientId && !hostPlayerSpawned)
+            {
+                // Spawn del host la primera vez
+                SpawnPlayer(clientId);
+                hostPlayerSpawned = true;
+            }
+            else if (clientId != NetworkManager.Singleton.LocalClientId)
+            {
+                // Spawn de cualquier cliente que no sea el host
+                SpawnPlayer(clientId);
+            }
         }
     }
 
@@ -80,8 +92,18 @@ public class TestRelayConn : MonoBehaviour
         // Instanciar el objeto jugador
         GameObject playerInstance = Instantiate(randomPlayerPrefab, spawnTransform.position, spawnTransform.rotation);
 
-        // Spawnear el objeto como jugador en la red
-        playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
+        // Spawnear el objeto como jugador en la red y asociarlo con el cliente
+        NetworkObject networkObject = playerInstance.GetComponent<NetworkObject>();
+
+        if (networkObject != null)
+        {
+            // Spawnear el objeto como el jugador de ese cliente específico
+            networkObject.SpawnAsPlayerObject(clientId);
+        }
+        else
+        {
+            Debug.LogError("No se encontró NetworkObject en el prefab de jugador.");
+        }
     }
 
     // Obtener el siguiente punto de spawn de manera cíclica

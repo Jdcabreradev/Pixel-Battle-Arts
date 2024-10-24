@@ -3,46 +3,61 @@ using Unity.Netcode;
 
 public class Projectile : NetworkBehaviour
 {
-    public float speed = 10f; // Velocidad del proyectil
-    private PlayerController owner; // Referencia al jugador que lanzó el proyectil
+    public float speed = 10f;
+    private PlayerController owner;
     private Rigidbody2D rb;
+
+    private Vector2 direction;
+    public ulong OwnerId { get; private set; } // Track the owner's ID
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
     }
 
-    public void Initialize(PlayerController player)
+    // Initialize the projectile with direction and the owner's ID
+    public void Initialize(PlayerController player, Vector2 targetDirection)
     {
         owner = player;
-        // Encuentra al primer enemigo
-        GameObject enemy = GameObject.FindWithTag("Enemy");
+        direction = targetDirection.normalized;
+        OwnerId = player.OwnerId; // Set the owner ID
 
-        if (enemy != null)
+        rb.velocity = direction * speed;
+        RotateProjectile();
+    }
+
+    private void Update()
+    {
+        if (rb.velocity != Vector2.zero)
         {
-            // Calcula la dirección hacia el enemigo
-            Vector2 direction = (enemy.transform.position - transform.position).normalized;
-            rb.velocity = direction * speed;
-        }
-        else
-        {
-            // Si no hay enemigo, el proyectil avanza hacia la dirección actual
-            rb.velocity = transform.right * speed;
+            RotateProjectile();
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void RotateProjectile()
     {
-        if (collision.gameObject.CompareTag("Enemy"))
+        float angle = Mathf.Atan2(rb.velocity.y, rb.velocity.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
+
+    // Use trigger instead of collision for projectile detection
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        // Check if the hit object is a player and has a PlayerController
+        if (other.TryGetComponent(out PlayerController targetPlayer))
         {
-            // Aplica daño al enemigo llamando la función de daño del controlador
-            collision.gameObject.GetComponent<PlayerController>().TakeDamageServerRpc(10);
+            // Apply damage only if the hit player is not the owner of the projectile
+            if (targetPlayer.OwnerId != OwnerId)
+            {
+                targetPlayer.TakeDamageServerRpc(10, OwnerId);
+                NetworkObject.Despawn(true);
+            }
         }
 
-        // Destruye el proyectil tras la colisión
-        if (IsServer)
+        // Destroy the projectile after trigger collision
+        if (other.CompareTag("Ground") && IsServer) 
         {
-            Destroy(gameObject);
+            NetworkObject.Despawn(true);
         }
     }
 }

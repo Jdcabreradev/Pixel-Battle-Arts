@@ -24,6 +24,8 @@ public class PlayerController : NetworkBehaviour
     private float lastAttackTime = -1f; // Tracks the last time an attack was performed
     private bool isAlive = true;
 
+    public ulong OwnerId { get; private set; } // New: Store the owner/player ID
+
     private void Awake()
     {
         Animator = GetComponent<Animator>();
@@ -41,6 +43,7 @@ public class PlayerController : NetworkBehaviour
         var attackState = new AttackState(this);
         var hitState = new HitState(this);
         var deathState = new DeathState(this);
+        var rangedState = new RangedState(this);
 
         FSM.AddState("Idle", idleState);
         FSM.AddState("Run", runState);
@@ -49,9 +52,16 @@ public class PlayerController : NetworkBehaviour
         FSM.AddState("Attack", attackState);
         FSM.AddState("Hit", hitState);
         FSM.AddState("Death", deathState);
+        FSM.AddState("Ranged", rangedState);  // Añadir el nuevo estado
 
         FSM.SetStartState("Idle");
         FSM.Init();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+        OwnerId = OwnerClientId; // Assign the network player owner ID
     }
 
     private void Start()
@@ -74,34 +84,32 @@ public class PlayerController : NetworkBehaviour
 
         if (Input.GetMouseButtonDown(0)) // 0 is the left mouse button
         {
-            if (isRanged)
-            {
-                ShootProjectile();
-            }
-            else
-            {
-                Attack();
-            }
+            Attack();
         }
     }
 
     public void ShootProjectile()
     {
-        if (Time.time >= lastAttackTime + attackCooldown)
-        {
-            lastAttackTime = Time.time;
-            // Llamada para instanciar el proyectil en la red
-            ShootProjectileServerRpc();
-        }
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0f;
+
+        // Calculate the direction from the player to the mouse position
+        Vector2 direction = (mousePos - projectileSpawnPoint.position).normalized;
+
+        // Spawn the projectile on the server and initialize it with the direction
+        FireProjectileServerRpc(direction);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void ShootProjectileServerRpc()
+    private void FireProjectileServerRpc(Vector2 direction)
     {
-        GameObject projectileInstance = Instantiate(projectilePrefab, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
-        projectileInstance.GetComponent<NetworkObject>().Spawn(true);  // Instancia el proyectil en la red
-        projectileInstance.GetComponent<Projectile  >().Initialize(this); // Inicializa el proyectil
+        GameObject projectileInstance = Instantiate(projectilePrefab, projectileSpawnPoint.position, Quaternion.identity);
+        projectileInstance.GetComponent<Projectile>().Initialize(this, direction);
+
+        // Spawn the projectile across the network
+        projectileInstance.GetComponent<NetworkObject>().Spawn(true);
     }
+
     public void Flip(float horizontalInput)
     {
         if (horizontalInput > 0 && !facingRight)
@@ -146,16 +154,28 @@ public class PlayerController : NetworkBehaviour
         if (Time.time >= lastAttackTime + attackCooldown)
         {
             lastAttackTime = Time.time;
-            SetAttackColliderActive(true);
-            FSM.RequestStateChange("Attack");
+            rb.velocity = Vector2.zero;  // Stop movement   
+            if (isRanged)
+            {
+                FSM.RequestStateChange("Ranged");
+            }
+            else
+            {
+                SetAttackColliderActive(true);
+                FSM.RequestStateChange("Attack");
+            }
+            
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void TakeDamageServerRpc(int damage)
+    public void TakeDamageServerRpc(int damage, ulong attackerId)
     {
-        Health -= damage;
+        // Prevent friendly fire (do not take damage from the same owner)
+        if (attackerId == OwnerId)
+            return;
 
+        Health -= damage;
         if (Health <= 0)
         {
             this.DisableControls();
@@ -164,7 +184,7 @@ public class PlayerController : NetworkBehaviour
         }
         else
         {
-            FSM.RequestStateChange("Hit");  // Only change state for hit, no locking
+            FSM.RequestStateChange("Hit");
         }
     }
 
@@ -202,23 +222,25 @@ public class PlayerController : NetworkBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Enemy")) // Check if the collided object is an enemy
+        if (other.TryGetComponent(out PlayerController player) && isAlive)
         {
-            Debug.Log("attack! sended");
-            other.GetComponent<PlayerController>().TakeDamageServerRpc(10); // Replace with your damage logic
+            if (player.OwnerId != OwnerId)
+            {
+                player.TakeDamageServerRpc(10, OwnerId); // Pass the attacker's OwnerId to the target
+            }
         }
     }
 
     public void DisableControls()
     {
-        this.enabled = false;
+        this.isAlive = false;
         playerCollider.isTrigger = true;
         rb.bodyType = RigidbodyType2D.Static;
     }
 
     public void UnlockControls()
     {
-        this.isAlive = false;
+        this.isAlive = true;
         playerCollider.isTrigger = false;
         rb.bodyType = RigidbodyType2D.Dynamic;
     }
