@@ -17,6 +17,7 @@ public class JumpState : State
     {
         // Play jump animation
         playerController.Animator.Play("Jump");
+        playerController.audioSource.PlayOneShot(playerController.jumpClip);
 
         // Apply jump force only on the first jump
         if (playerController.JumpCount == 0)

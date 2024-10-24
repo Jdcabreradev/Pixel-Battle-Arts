@@ -12,6 +12,7 @@ public class HitState : State
     public override void OnEnter()
     {
         playerController.Animator.Play("Hit");
+        playerController.audioSource.PlayOneShot(playerController.hitClip);
     }
 
     public override void OnLogic()

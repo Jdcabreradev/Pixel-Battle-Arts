@@ -26,12 +26,21 @@ public class PlayerController : NetworkBehaviour
 
     public ulong OwnerId { get; private set; } // New: Store the owner/player ID
 
+    // Add audio-related fields
+    public AudioSource audioSource;  // The AudioSource to play sounds
+    public AudioClip attackClip;     // Sound for attacking
+    public AudioClip jumpClip;       // Sound for jumping
+    public AudioClip runClip;        // Sound for running
+    public AudioClip hitClip;        // Sound for getting hit
+    public AudioClip deathClip;      // Sound for dying
+
     private void Awake()
     {
         Animator = GetComponent<Animator>();
         playerCollider = GetComponent<Collider2D>();
         rb = GetComponent<Rigidbody2D>();
         attackCollider = transform.Find("AttackCollider").GetComponent<Collider2D>();
+        audioSource = GetComponent<AudioSource>();  // Ensure we have an AudioSource component
         SetAttackColliderActive(false); // Ensure it's disabled at start
 
         FSM = new StateMachine();

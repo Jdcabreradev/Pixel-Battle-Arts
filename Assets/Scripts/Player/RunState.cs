@@ -16,6 +16,9 @@ public class RunState : State
     {
         // Optional: Play running animation
         playerController.Animator.Play("Run");
+        playerController.audioSource.loop = true;
+        playerController.audioSource.clip = playerController.runClip;
+        playerController.audioSource.Play();
     }
 
     public override void OnLogic()
@@ -43,5 +46,7 @@ public class RunState : State
     public override void OnExit()
     {
         // Optional: Cleanup
+        playerController.audioSource.loop = false;
+        playerController.audioSource.Stop();
     }
 }
