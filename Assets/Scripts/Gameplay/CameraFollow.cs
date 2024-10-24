@@ -3,12 +3,12 @@ using Cinemachine;
 
 public class CameraFollow : MonoBehaviour
 {
-    public CinemachineVirtualCamera virtualCamera; // La cámara virtual de Cinemachine
+    public CinemachineVirtualCamera virtualCamera; // La cï¿½mara virtual de Cinemachine
     private GameObject player; // El jugador que queremos seguir
 
     void Start()
     {
-        // Llamar a la función cada cierto tiempo para revisar si el jugador ha sido spawneado
+        // Llamar a la funciï¿½n cada cierto tiempo para revisar si el jugador ha sido spawneado
         InvokeRepeating("CheckForPlayer", 0f, 1f); // Revisa cada 1 segundo
     }
 
@@ -19,9 +19,9 @@ public class CameraFollow : MonoBehaviour
 
         if (player != null)
         {
-            // Si el jugador ha sido encontrado, asigna el seguimiento a la cámara y detén las repeticiones
+            // Si el jugador ha sido encontrado, asigna el seguimiento a la cï¿½mara y detï¿½n las repeticiones
             virtualCamera.Follow = player.transform;
-            virtualCamera.LookAt = player.transform; // Opcional: si también deseas que la cámara mire al jugador
+            virtualCamera.LookAt = player.transform; // Opcional: si tambiï¿½n deseas que la cï¿½mara mire al jugador
             CancelInvoke("CheckForPlayer");
         }
     }
