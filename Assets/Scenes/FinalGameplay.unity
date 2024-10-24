@@ -17301,7 +17301,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1463537512}
+  m_Father: {fileID: 403714074}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!483693784 &283521402
 TilemapRenderer:
@@ -21295,7 +21295,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1463537512}
+  m_Father: {fileID: 403714074}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!483693784 &307499104
 TilemapRenderer:
@@ -25516,6 +25516,43 @@ MonoBehaviour:
   - {x: -0.8990154, y: -0.73725486, z: 0}
   - {x: -0.76287365, y: -0.93174267, z: 0}
   - {x: -0.7434249, y: -1.1651282, z: 0}
+--- !u!1 &403714073
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 403714074}
+  m_Layer: 0
+  m_Name: Arboles de Fondo
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &403714074
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 403714073}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 283521401}
+  - {fileID: 558378231}
+  - {fileID: 1415552026}
+  - {fileID: 1097735730}
+  - {fileID: 1210558637}
+  - {fileID: 307499103}
+  m_Father: {fileID: 1463537512}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &419544945
 GameObject:
   m_ObjectHideFlags: 0
@@ -27902,11 +27939,11 @@ Transform:
   m_GameObject: {fileID: 558378230}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.15, y: 0, z: -4}
+  m_LocalPosition: {x: -2.1500015, y: 0, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1463537512}
+  m_Father: {fileID: 403714074}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!483693784 &558378232
 TilemapRenderer:
@@ -37996,11 +38033,11 @@ Transform:
   m_GameObject: {fileID: 1097735729}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5.8, y: 0, z: -4}
+  m_LocalPosition: {x: -5.799999, y: 0, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1463537512}
+  m_Father: {fileID: 403714074}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!483693784 &1097735731
 TilemapRenderer:
@@ -43181,7 +43218,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1463537512}
+  m_Father: {fileID: 403714074}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!483693784 &1210558638
 TilemapRenderer:
@@ -47949,11 +47986,11 @@ Transform:
   m_GameObject: {fileID: 1415552025}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.45, y: 0, z: -4}
+  m_LocalPosition: {x: -3.4500008, y: 0, z: -4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1463537512}
+  m_Father: {fileID: 403714074}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!483693784 &1415552027
 TilemapRenderer:
@@ -52381,13 +52418,8 @@ Transform:
   m_Children:
   - {fileID: 54715158}
   - {fileID: 735386915}
-  - {fileID: 283521401}
-  - {fileID: 558378231}
-  - {fileID: 1415552026}
+  - {fileID: 403714074}
   - {fileID: 1723577969}
-  - {fileID: 1097735730}
-  - {fileID: 1210558637}
-  - {fileID: 307499103}
   - {fileID: 510075583}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
