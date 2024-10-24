@@ -12,6 +12,7 @@ public class DeathState : State
     public override void OnEnter()
     {
         playerController.Animator.Play("Death");
+        playerController.audioSource.PlayOneShot(playerController.deathClip);
     }
 
     public override void OnLogic()

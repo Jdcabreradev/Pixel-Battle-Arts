@@ -14,6 +14,7 @@ public class RangedState : State
     {
         // Reproduce la animación de ataque a distancia
         playerController.Animator.Play("Attack1");
+        playerController.audioSource.PlayOneShot(playerController.attackClip);
     }
 
     public override void OnLogic()

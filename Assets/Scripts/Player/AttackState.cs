@@ -14,6 +14,7 @@ public class AttackState : State
     {
         // Play attack animation
         playerController.Animator.Play("Attack1");
+        playerController.audioSource.PlayOneShot(playerController.attackClip);
         // Optionally activate a collider for the attack hitbox
         // e.g., attackCollider.SetActive(true);
     }
