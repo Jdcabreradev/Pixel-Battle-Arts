@@ -24,7 +24,7 @@ public class FallState : State
         HandleMovement();
 
         // Check if the player has landed to transition back to Run or Idle
-        if (playerController.IsGrounded())
+        if (playerController.rb.velocity.y == 0)
         {
             playerController.ResetJumpCount();
             playerController.FSM.RequestStateChange("Run");
@@ -40,5 +40,6 @@ public class FallState : State
     {
         float horizontalInput = Input.GetAxisRaw("Horizontal");
         rb.velocity = new Vector2(horizontalInput * playerController.RunSpeed, rb.velocity.y);
+        playerController.Flip(horizontalInput);
     }
 }

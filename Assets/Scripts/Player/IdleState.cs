@@ -20,6 +20,11 @@ public class IdleState : State
 
     public override void OnLogic()
     {
+
+        if (playerController.rb.velocity.y > 0)
+        {
+            playerController.FSM.RequestStateChange("Fall");
+        }
         // Transition to RunState if there is horizontal input
         if (Input.GetAxisRaw("Horizontal") != 0)
         {

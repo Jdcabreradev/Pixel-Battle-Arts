@@ -7,7 +7,7 @@ public class PlayerController : NetworkBehaviour
 {
     public StateMachine FSM { get; private set; }
     public Animator Animator { get; private set; }
-    private Rigidbody2D rb;
+    public Rigidbody2D rb { get; private set; }
     public float RunSpeed = 5f;
     private int jumpCount = 0;
     private bool isGrounded = false;
