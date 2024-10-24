@@ -1,8 +1,8 @@
 using UnityEngine;
 using Unity.Netcode;
 using UnityHFSM;
-using UnityEngine.ProBuilder;
-
+using Cinemachine;
+using System.Collections;
 public class PlayerController : NetworkBehaviour
 {
     public StateMachine FSM { get; private set; }
@@ -24,7 +24,13 @@ public class PlayerController : NetworkBehaviour
     private float lastAttackTime = -1f; // Tracks the last time an attack was performed
     private bool isAlive = true;
 
-    public ulong OwnerId { get; private set; } // New: Store the owner/player ID
+    private bool isDashing = false;
+    private Vector2 dashTargetPosition;
+    public float dashDistance = 5f;  // La distancia del dash
+    public float dashDuration = 0.2f; // Duración del dash en segundos
+    public float dashCooldown = 2f;
+
+    public ulong OwnerId { get; private set; } 
 
     // Add audio-related fields
     public AudioSource audioSource;  // The AudioSource to play sounds
@@ -83,6 +89,11 @@ public class PlayerController : NetworkBehaviour
         {
             this.gameObject.tag = "Player";
             rb.bodyType = RigidbodyType2D.Dynamic;
+            GameObject camera = GameObject.Find("Main Camera");
+            camera.GetComponent<AudioSource>().enabled = false;
+            CinemachineVirtualCamera vcamera = GameObject.Find("Virtual Camera").GetComponent<CinemachineVirtualCamera>();
+            vcamera.Follow = this.transform;
+            vcamera.LookAt = this.transform;
         }
         else
         {
@@ -99,6 +110,61 @@ public class PlayerController : NetworkBehaviour
         {
             Attack();
         }
+        if (Input.GetMouseButtonDown(1) && !isDashing)
+        {
+            Dash();
+        }
+    }
+
+    private void Dash()
+    {
+        if (!isDashing)
+        {
+            // Obtener la dirección en la que el jugador está mirando (escala en X)
+            Vector2 dashDirection = facingRight ? Vector2.right : Vector2.left;
+
+            // Calculamos la posición objetivo del dash
+            dashTargetPosition = (Vector2)transform.position + dashDirection * dashDistance;
+            
+
+            // Iniciar la corrutina de dash para moverse hacia esa posición
+            StartCoroutine(DashMovement());           
+        }
+    }
+
+    private IEnumerator DashMovement()
+    {
+        isDashing = true;
+        float elapsedTime = 0f;
+
+        // Guardamos la posición inicial, incluyendo la coordenada Z
+        Vector3 startPosition = transform.position;
+
+        // Calculamos la posición objetivo, preservando el valor de Z
+        Vector3 targetPosition = new Vector3(dashTargetPosition.x, dashTargetPosition.y, startPosition.z);
+
+        while (elapsedTime < dashDuration)
+        {
+            // Interpolamos solo los ejes X e Y, preservando la Z
+            transform.position = Vector3.Lerp(startPosition, targetPosition, elapsedTime / dashDuration);
+            elapsedTime += Time.deltaTime;
+
+            yield return null;  // Esperar hasta el siguiente frame
+        }
+
+        // Aseguramos que el jugador termina exactamente en la posición final, preservando Z
+        transform.position = targetPosition;
+
+        isDashing = false;
+        StartCoroutine(DashCooldown());
+    }
+
+
+    private IEnumerator DashCooldown()
+    {
+        isDashing = true; // Desactivamos el dash mientras el cooldown está activo
+        yield return new WaitForSeconds(dashCooldown); // Esperamos el tiempo del cooldown
+        isDashing = false; // Volvemos a activar el dash
     }
 
     public void ShootProjectile()

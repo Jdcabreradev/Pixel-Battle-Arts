@@ -6,6 +6,8 @@ public class FallState : State
     private PlayerController playerController;
     private Rigidbody2D rb;
 
+
+
     public FallState(PlayerController playerController, Rigidbody2D rb)
     {
         this.playerController = playerController;

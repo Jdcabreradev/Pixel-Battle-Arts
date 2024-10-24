@@ -6,6 +6,7 @@ public class RunState : State
     private PlayerController playerController;
     private Rigidbody2D rb;
 
+
     public RunState(PlayerController playerController, Rigidbody2D rb)
     {
         this.playerController = playerController;
@@ -14,7 +15,7 @@ public class RunState : State
 
     public override void OnEnter()
     {
-        // Optional: Play running animation
+        // Reproducir la animación de correr
         playerController.Animator.Play("Run");
         playerController.audioSource.loop = true;
         playerController.audioSource.clip = playerController.runClip;
@@ -23,21 +24,16 @@ public class RunState : State
 
     public override void OnLogic()
     {
-        // Handle horizontal movement
-        float horizontalInput = Input.GetAxisRaw("Horizontal");
-        rb.velocity = new Vector2(horizontalInput * playerController.RunSpeed, rb.velocity.y);
+        HandleMovement();
 
-        // Flip the player based on movement direction
-        playerController.Flip(horizontalInput);
-
-        // Check for jump input
+        // Verificar si el jugador quiere saltar
         if (Input.GetKeyDown(KeyCode.Space) && playerController.CanJump())
         {
             playerController.FSM.RequestStateChange("Jump");
         }
 
-        // Transition to Idle if no input
-        if (horizontalInput == 0)
+        // Transición a Idle si no hay input
+        if (Input.GetAxisRaw("Horizontal") == 0)
         {
             playerController.FSM.RequestStateChange("Idle");
         }
@@ -45,8 +41,15 @@ public class RunState : State
 
     public override void OnExit()
     {
-        // Optional: Cleanup
+        // Detener el audio de correr
         playerController.audioSource.loop = false;
         playerController.audioSource.Stop();
+    }
+
+    private void HandleMovement()
+    {
+        float horizontalInput = Input.GetAxisRaw("Horizontal");
+        rb.velocity = new Vector2(horizontalInput * playerController.RunSpeed, rb.velocity.y);
+        playerController.Flip(horizontalInput);
     }
 }

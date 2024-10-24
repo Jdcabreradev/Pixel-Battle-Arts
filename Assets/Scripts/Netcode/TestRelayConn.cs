@@ -12,6 +12,7 @@ using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 
 public class TestRelayConn : MonoBehaviour
 {
@@ -26,7 +27,6 @@ public class TestRelayConn : MonoBehaviour
     public Transform[] spawnPoints;
     private int nextSpawnIndex = 0; // Rastrea el siguiente punto de spawn a utilizar
 
-    private int maxPlayers = 3; // Máximo número de jugadores en la partida
     private string joinCode;
     private bool hostPlayerSpawned = false; // Controla si el jugador del host ya fue spawneado
 
@@ -119,8 +119,14 @@ public class TestRelayConn : MonoBehaviour
     {
         try
         {
+            int number;
+
+            if (!int.TryParse(inputField.text, out number))
+            {
+                number = 4; // Si la conversión falla, asignar el valor por defecto
+            }
             // Crear una asignación de relay para el número máximo de jugadores
-            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(number);
 
             // Obtener el código de unión para que otros jugadores se puedan unir
             joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
@@ -141,6 +147,7 @@ public class TestRelayConn : MonoBehaviour
                 hostPlayerSpawned = true; // Marcamos que ya se ha spawneado
             }
 
+            inputField.text = joinCode;
             return joinCode;
         }
         catch (RelayServiceException e)

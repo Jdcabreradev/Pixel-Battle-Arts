@@ -5,7 +5,9 @@ public class JumpState : State
 {
     private PlayerController playerController;
     private Rigidbody2D rb;
-    private float jumpForce = 9f;
+
+    // Usamos los mismos valores que en RunState
+    private float jumpForce = 10f; // Fuerza del salto
 
     public JumpState(PlayerController playerController, Rigidbody2D rb)
     {
@@ -15,26 +17,25 @@ public class JumpState : State
 
     public override void OnEnter()
     {
-        // Play jump animation
+        // Reproducir animación de salto
         playerController.Animator.Play("Jump");
         playerController.audioSource.PlayOneShot(playerController.jumpClip);
 
-        // Apply jump force only on the first jump
-        if (playerController.JumpCount == 0)
+        // Aplicar fuerza de salto solo si no hemos alcanzado el máximo de saltos
+        if (playerController.JumpCount < 2)
         {
-            rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+            rb.velocity = new Vector2(rb.velocity.x, 0); // Reiniciar velocidad en Y para un salto consistente
+            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+            playerController.JumpCount++;
         }
-
-        // Increment jump count
-        playerController.JumpCount++;
     }
 
     public override void OnLogic()
     {
-        // Allow movement during jump
+        // Permitir movimiento horizontal durante el salto
         HandleMovement();
 
-        // Transition to FallState if falling
+        // Transición a estado de caída si la velocidad vertical es negativa (cayendo)
         if (rb.velocity.y < 0)
         {
             playerController.FSM.RequestStateChange("Fall");
@@ -43,14 +44,13 @@ public class JumpState : State
 
     public override void OnExit()
     {
-        // Cleanup or reset as necessary
+        // Limpieza si es necesario
     }
 
     private void HandleMovement()
     {
         float horizontalInput = Input.GetAxisRaw("Horizontal");
         rb.velocity = new Vector2(horizontalInput * playerController.RunSpeed, rb.velocity.y);
-
         playerController.Flip(horizontalInput);
     }
 }
