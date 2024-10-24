@@ -106,17 +106,17 @@ public class PlayerController : NetworkBehaviour
         Vector2 direction = (mousePos - projectileSpawnPoint.position).normalized;
 
         // Spawn the projectile on the server and initialize it with the direction
-        FireProjectileServerRpc(direction);
+        FireProjectileServerRpc(direction,this.OwnerId);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void FireProjectileServerRpc(Vector2 direction)
+    private void FireProjectileServerRpc(Vector2 direction, ulong clientId)
     {
         GameObject projectileInstance = Instantiate(projectilePrefab, projectileSpawnPoint.position, Quaternion.identity);
-        projectileInstance.GetComponent<Projectile>().Initialize(this, direction);
+        projectileInstance.GetComponent<Projectile>().Initialize(direction,clientId);
 
         // Spawn the projectile across the network
-        projectileInstance.GetComponent<NetworkObject>().Spawn(true);
+        projectileInstance.GetComponent<NetworkObject>().Spawn();
     }
 
     public void Flip(float horizontalInput)
@@ -160,6 +160,16 @@ public class PlayerController : NetworkBehaviour
 
     public void Attack()
     {
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0f;
+        if (isRanged)
+        {
+            if ((facingRight && mousePos.x < projectileSpawnPoint.position.x) || (!facingRight && mousePos.x > projectileSpawnPoint.position.x))
+            {
+               return;
+            }
+            
+        }
         if (Time.time >= lastAttackTime + attackCooldown)
         {
             lastAttackTime = Time.time;
@@ -200,8 +210,8 @@ public class PlayerController : NetworkBehaviour
     [ClientRpc]
     private void NotifyDeathClientRpc()
     {
-        this.DisableControls();
         FSM.RequestStateChange("Death");
+        this.DisableControls();
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -242,13 +252,17 @@ public class PlayerController : NetworkBehaviour
 
     public void DisableControls()
     {
+        this.audioSource.enabled = false;
+        this.enabled = false;
         this.isAlive = false;
         playerCollider.isTrigger = true;
         rb.bodyType = RigidbodyType2D.Static;
     }
 
     public void UnlockControls()
-    {
+    {   
+        this.audioSource.enabled = true;
+        this.enabled = true;
         this.isAlive = true;
         playerCollider.isTrigger = false;
         rb.bodyType = RigidbodyType2D.Dynamic;
